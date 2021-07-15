@@ -45,6 +45,7 @@ pub struct wbg_rayon_PoolBuilder {
     receiver: Receiver<rayon::ThreadBuilder>,
 }
 
+#[cfg(not(feature = "no-modules"))]
 #[cfg_attr(
     not(feature = "no-bundler"),
     wasm_bindgen(module = "/src/workerHelpers.js")
@@ -56,6 +57,13 @@ pub struct wbg_rayon_PoolBuilder {
 extern "C" {
     #[wasm_bindgen(js_name = startWorkers)]
     fn start_workers(module: JsValue, memory: JsValue, builder: wbg_rayon_PoolBuilder) -> Promise;
+}
+
+#[cfg(feature = "no-modules")]
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_name = startWorkers)]
+    fn start_workers(module: JsString, memory: JsValue, builder: wbg_rayon_PoolBuilder) -> Promise;
 }
 
 #[wasm_bindgen]
@@ -70,6 +78,7 @@ impl wbg_rayon_PoolBuilder {
     }
 
     #[cfg(feature = "no-bundler")]
+    #[cfg(not(feature = "no-modules"))]
     #[wasm_bindgen(js_name = mainJS)]
     pub fn main_js(&self) -> JsString {
         #[wasm_bindgen]
@@ -112,11 +121,23 @@ impl wbg_rayon_PoolBuilder {
     }
 }
 
+#[cfg(not(feature = "no-modules"))]
 #[wasm_bindgen(js_name = initThreadPool)]
 #[doc(hidden)]
 pub fn init_thread_pool(num_threads: usize) -> Promise {
     start_workers(
         wasm_bindgen::module(),
+        wasm_bindgen::memory(),
+        wbg_rayon_PoolBuilder::new(num_threads),
+    )
+}
+
+#[cfg(feature = "no-modules")]
+#[wasm_bindgen(js_name = initThreadPool)]
+#[doc(hidden)]
+pub fn init_thread_pool(num_threads: usize, worker_source: JsString) -> Promise {
+    start_workers(
+        worker_source,
         wasm_bindgen::memory(),
         wbg_rayon_PoolBuilder::new(num_threads),
     )
@@ -142,5 +163,5 @@ where
     // start executing it.
     //
     // On practice this will start running Rayon's internal event loop.
-    receiver.recv().unwrap_throw().run()
+    receiver.recv().unwrap_throw().run();
 }

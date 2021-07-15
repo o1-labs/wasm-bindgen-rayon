@@ -22,6 +22,7 @@ members = ["demo", "test"]
 [features]
 nightly = []
 no-bundler = []
+no-modules = []
 
 [package.metadata.docs.rs]
 features = ["nightly"]
