@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2022 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -67,6 +67,10 @@ waitForMsgType(self, 'wasm_bindgen_worker_init').then(async data => {
 let _workers;
 
 export async function startWorkers(module, memory, builder) {
+  if (builder.numThreads() === 0) {
+    throw new Error(`num_threads must be > 0.`);
+  }
+
   const workerInit = {
     type: 'wasm_bindgen_worker_init',
     module,

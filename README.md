@@ -35,8 +35,6 @@ Most notably, even when you're using multithreading, the main thread still **can
 
 You must instantiate the main JS+Wasm in a dedicated `Worker` to avoid blocking the main thread - that is, don't mix UI and Rayon code together. Instead, use a library like [Comlink](https://github.com/GoogleChromeLabs/comlink) or a custom glue code to expose required wasm-bindgen methods to the main thread, and do the UI work from there.
 
-Note: Chrome currently does allow blocking on the main thread, but it's a [bug](https://bugs.chromium.org/p/chromium/issues/detail?id=1190951) that's going to be fixed soon.
-
 ## Setting up
 
 First of all, in order to use `SharedArrayBuffer` on the Web, you need to enable [cross-origin isolation policies](https://web.dev/coop-coep/). Check out the linked article for details.
@@ -45,7 +43,7 @@ First of all, add this crate as a dependency to your `Cargo.toml` (in addition t
 
 ```toml
 [dependencies]
-wasm-bindgen = "0.2"
+wasm-bindgen = "0.2.74"
 rayon = "1.5"
 wasm-bindgen-rayon = "1.0"
 ```
@@ -103,18 +101,18 @@ The other issue is that the Rust standard library for the WebAssembly target is 
 
 Since we do want standard APIs like [`Mutex`, `Arc` and so on to work](https://doc.rust-lang.org/std/sync/), you'll need to use the nightly compiler toolchain and pass some flags to rebuild the standard library in addition to your own code.
 
-In order to reduce risk of breakages, it's strongly recommended to use a fixed nightly version. For example, the latest stable Rust at the moment of writing is version 1.50, which corresponds to `nightly-2021-02-11`, which was tested and works with this crate.
+In order to reduce risk of breakages, it's strongly recommended to use a fixed nightly version. For example, the latest stable Rust at the moment of writing is version 1.60, which corresponds to `nightly-2022-04-07`, which was tested and works with this crate.
 
 ### Using config files
 
 The easiest way to configure those flags is:
 
-1. Put a string `nightly-2021-02-11` in a `rust-toolchain` file in your project directory. This tells Rustup to use nightly toolchain by default for your project.
+1. Put a string `nightly-2022-04-07` in a `rust-toolchain` file in your project directory. This tells Rustup to use nightly toolchain by default for your project.
 2. Put the following in a `.cargo/config` file in your project directory:
 
    ```toml
    [target.wasm32-unknown-unknown]
-   rustflags = ["-C", "target-feature=+atomics,+bulk-memory"]
+   rustflags = ["-C", "target-feature=+atomics,+bulk-memory,+mutable-globals"]
 
    [unstable]
    build-std = ["panic_abort", "std"]
@@ -135,8 +133,8 @@ If you prefer not to configure those parameters by default, you can pass them as
 In that case, the whole command looks like this:
 
 ```sh
-RUSTFLAGS='-C target-feature=+atomics,+bulk-memory' \
-	rustup run nightly-2021-02-11 \
+RUSTFLAGS='-C target-feature=+atomics,+bulk-memory,+mutable-globals' \
+	rustup run nightly-2022-04-07 \
 	wasm-pack build --target web [...] \
 	-- -Z build-std=panic_abort,std
 ```
@@ -170,7 +168,7 @@ wasmPkg.nowCallAnyExportedFuncs();
 
 WebAssembly threads use Web Workers under the hood for instantiating other threads with the same WebAssembly module & memory.
 
-wasm-bindgen-rayon provides the required JS code for those Workers internally, and uses a syntax that is recognised across various bundlers.
+wasm-bindgen-rayon provides the required JS code for those Workers internally, and [uses a syntax that is recognised across various bundlers](https://web.dev/bundling-non-js-resources/).
 
 ### Usage with Webpack
 
@@ -182,7 +180,7 @@ For Rollup, you'll need [`@surma/rollup-plugin-off-main-thread`](https://github.
 
 ### Usage with Parcel
 
-_[Coming soon...]_ Parcel v2 also recognises the used syntax, but it's still in development and there are some minor issues to fix before it can be used with this crate.
+The upcoming Parcel v2 also recognises the used syntax and supports WebAssembly and Worker bundling, so should work out of the box.
 
 ### Usage without bundlers
 

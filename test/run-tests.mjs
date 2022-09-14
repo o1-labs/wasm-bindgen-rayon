@@ -1,5 +1,5 @@
-/**
- * Copyright 2021 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2022 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -57,7 +57,7 @@ import { promises as fs } from 'fs';
   console.log('Running tests...');
   await Promise.all([
     runTest('no-bundler', '/index.html'),
-    ...['rollup', 'webpack' /*, 'parcel'*/].map(name =>
+    ...['rollup', 'webpack', 'parcel'].map(name =>
       runTest(name).catch(err => console.error(name, err))
     )
   ]);
